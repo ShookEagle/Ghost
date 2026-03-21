@@ -1,0 +1,7 @@
+{
+  "prefix": "{darkblue}GHOST> {grey}",
+  "no_permission_needs_ds_generic": "%prefix%{red}This requires {green}Dedicated Supporter{red}, consider supporting us at {green}edgm.rs/donate!",
+  "command_must_be_dead": "%prefix%{red}You must be dead to use ghost mode.",
+  "command_must_on_team": "%prefix%{red}You must be on a team to use ghost mode.",
+  "command_ghost_confirm": "%prefix%Toggled ghost."
+}
