@@ -22,9 +22,6 @@ public class BlockEvents {
 
     plugin.GetBase().RegisterListener<Listeners.CheckTransmit>(checkTransmit);
 
-    plugin.GetBase()
-     .RegisterListener<Listeners.OnEntityTakeDamagePre>(OnTakeDamage);
-
     plugin.GetBase().HookUserMessage(208, OnSoundEvent);
     plugin.GetBase()
      .RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath, HookMode.Pre);
@@ -87,23 +84,7 @@ public class BlockEvents {
 
     return HookResult.Continue;
   }
-
-  // Ghost players take no damage
-  private HookResult OnTakeDamage(CBaseEntity entity, CTakeDamageInfo info) {
-    var pawn = Utilities.GetPlayers()
-     .FirstOrDefault(p
-        => p.IsReal() && p.PlayerPawn.Value?.Index == entity.Index);
-    if (pawn != null && (pawn.DesignerName != "player"
-      || pawn.OriginalControllerOfCurrentPawn.Value == null))
-      return HookResult.Continue;
-
-    var player = pawn?.OriginalControllerOfCurrentPawn.Value;
-
-    if (player != null && !plugin.GhostPlayers.Contains(player.SteamID))
-      return HookResult.Continue;
-    info.Damage = 0;
-    return HookResult.Handled;
-  }
+  
 
   // Other players don't hear ghost player footsteps/sounds
   HookResult OnSoundEvent(UserMessage um) {
