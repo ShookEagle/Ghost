@@ -14,6 +14,7 @@ public class Ghost : BasePlugin, IGhost {
   public override string ModuleVersion => "1.0.0";
   public HashSet<ulong> GhostPlayers { get; set; } = [];
   public HashSet<ulong> WasGhostThisRound { get; set; } = [];
+  public HashSet<ulong> JustJoined { get; set; } = [];
 
   public override void Load(bool hotReload) {
     AddCommand("css_ghost", "Allows DS players to turn into a ghost while dead",

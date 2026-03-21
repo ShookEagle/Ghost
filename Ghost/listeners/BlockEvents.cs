@@ -15,18 +15,47 @@ public class BlockEvents {
     plugin.GetBase()
      .RegisterEventHandler<EventRoundEnd>(OnRoundEnd, HookMode.Pre);
     plugin.GetBase().RegisterEventHandler<EventPlayerTeam>(OnPlayerTeam);
+    plugin.GetBase().RegisterEventHandler<EventPlayerConnect>(OnPlayerConnect);
 
     VirtualFunctions.CCSPlayer_WeaponServices_CanUseFunc.Hook(OnCanUse,
       HookMode.Pre);
+
+    plugin.GetBase().RegisterListener<Listeners.CheckTransmit>(checkTransmit);
 
     plugin.GetBase()
      .RegisterListener<Listeners.OnEntityTakeDamagePre>(OnTakeDamage);
 
     plugin.GetBase().HookUserMessage(208, OnSoundEvent);
-    plugin.GetBase().RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath, HookMode.Pre);
+    plugin.GetBase()
+     .RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath, HookMode.Pre);
   }
 
-  private HookResult OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info) {
+  private void checkTransmit(CCheckTransmitInfoList infoList) {
+    foreach (var (info, player) in infoList) {
+      if (player == null
+        || player.Connected != PlayerConnectedState.PlayerConnected
+        || !plugin.JustJoined.Contains(player.SteamID))
+        continue;
+
+      foreach (var playerController in plugin.GhostPlayers
+       .Select(ghost
+          => Utilities.GetPlayers().FirstOrDefault(p => p.SteamID == ghost))
+       .OfType<CCSPlayerController>()) {
+        if (playerController.PlayerPawn.Value != null)
+          info.TransmitEntities.Remove(playerController.PlayerPawn.Value.Index);
+      }
+    }
+  }
+
+  private HookResult OnPlayerConnect(EventPlayerConnect @event,
+    GameEventInfo info) {
+    if (@event.Userid == null) return HookResult.Continue;
+    plugin.JustJoined.Add(@event.Userid.SteamID);
+    return HookResult.Continue;
+  }
+
+  private HookResult
+    OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info) {
     if (@event.Userid == null) return HookResult.Continue;
     if (plugin.WasGhostThisRound.Contains(@event.Userid.SteamID))
       info.DontBroadcast = true;
@@ -40,6 +69,7 @@ public class BlockEvents {
      .Select(player
         => Utilities.GetPlayers().FirstOrDefault(p => p.SteamID == player))
      .OfType<CCSPlayerController>()) { plugin.TryExitGhost(playerController); }
+
     return HookResult.Continue;
   }
 
