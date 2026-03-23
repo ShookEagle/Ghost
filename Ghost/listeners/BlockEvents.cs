@@ -41,6 +41,7 @@ public class BlockEvents {
     VirtualFunctions.CBaseTrigger_StartTouchFunc.Hook(OnTriggerStartTouch,
       HookMode.Pre);
 
+    // Prevent Ghost Damage
     plugin.GetBase()
      .RegisterListener<Listeners.OnEntityTakeDamagePre>(OnTakeDamage);
   }
@@ -160,19 +161,27 @@ public class BlockEvents {
     var entity = hook.GetParam<CBaseEntity>(1);
     if (!entity.IsValid || entity.DesignerName != "player")
       return HookResult.Continue;
-    var player =
-      new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!
-       .Handle);
+
+    var pawn = new CCSPlayerPawn(entity.Handle);
+    if (!pawn.IsValid || pawn.Controller.Value == null)
+      return HookResult.Continue;
+
+    var player = new CCSPlayerController(pawn.Controller.Value.Handle);
+    if (!player.IsValid) return HookResult.Continue;
+
     var trigger = hook.GetParam<CTriggerMultiple>(0);
+    if (trigger is not { IsValid: true } || trigger.Entity == null)
+      return HookResult.Continue;
 
-    if (trigger.Entity == null) return HookResult.Continue;
+    var triggerName = trigger.Entity.Name;
+    if (string.IsNullOrWhiteSpace(triggerName)) return HookResult.Continue;
 
-    var name = trigger.Entity!.Name.Split(';')[0];
+    var name = triggerName.Split(';')[0];
 
     if (name == "redactedtpto") {
       if (plugin.GetMapTeleportsFix()
        .TeleportsList.TryGetValue(trigger, out var value))
-        player.PlayerPawn.Value!.Teleport(value);
+        player.PlayerPawn.Value?.Teleport(value);
     }
 
     hook.SetReturn(true);
