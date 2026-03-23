@@ -4,8 +4,10 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
+using Ghost.api.services;
 using Ghost.extensions;
 using Ghost.listeners;
+using Ghost.services;
 
 namespace Ghost;
 
@@ -14,18 +16,30 @@ public class Ghost : BasePlugin, IGhost {
   public override string ModuleVersion => "1.0.0";
   public HashSet<ulong> GhostPlayers { get; set; } = [];
   public HashSet<ulong> WasGhostThisRound { get; set; } = [];
-  public HashSet<ulong> JustJoined { get; set; } = [];
+  private BlockEvents? blockEvents;
+  private IMapTeleportsFix? mapTeleportsFix;
 
   public override void Load(bool hotReload) {
     AddCommand("css_ghost", "Allows DS players to turn into a ghost while dead",
       OnGhostCommand);
 
-    _ = new BlockEvents(this);
+    blockEvents     = new BlockEvents(this);
+    mapTeleportsFix = new MapTeleportsFix();
+
+    if (hotReload) {
+      mapTeleportsFix.LoadReplacedTeleportsFromMap();
+    }
 
     base.Load(hotReload);
   }
 
+  public override void Unload(bool hotReload) {
+    blockEvents?.Unhook();
+    base.Unload(hotReload);
+  }
+
   public BasePlugin GetBase() => this;
+  public IMapTeleportsFix GetMapTeleportsFix() => mapTeleportsFix!;
 
   private void OnGhostCommand(CCSPlayerController? player,
     CommandInfo commandInfo) {
